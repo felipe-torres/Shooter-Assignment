@@ -16,12 +16,14 @@ public class Enemy : MonoBehaviour
 	public int MaxHp = 5;
 	private int currentHp;
 
-	public enum State { Buried, Idle, Follow, Dead }
+	public enum State { Buried, Idle, Follow, Rest, Dead }
 	public State state = State.Idle;
 
 	// Should be the player. Exposed for scalability
 	public Transform Target;
+	private Player player;
 	private UnityEngine.AI.NavMeshAgent agent;
+	public Collider CollisionCollider;
 	public bool SeesTarget { get; set; }
 	public bool BuryOnStart = true;
 
@@ -47,6 +49,7 @@ public class Enemy : MonoBehaviour
 		audioSource = GetComponent<AudioSource>();
 
 		Target = GameObject.FindGameObjectWithTag("Player").transform;
+		player = Target.GetComponent<Player>();
 
 		// Some enemies spawn at some point during gameplay
 		if(BuryOnStart) Bury();
@@ -58,6 +61,7 @@ public class Enemy : MonoBehaviour
 		agent.enabled = false;
 		transform.DOMoveY(-1.68f, 0f).SetRelative(true);
 		HealthBarGroup.DOFade(0f, 0.5f);
+		CollisionCollider.enabled = false;
 	}
 
 	[ContextMenu ("Spawn")]
@@ -74,7 +78,8 @@ public class Enemy : MonoBehaviour
 		yield return new WaitForSeconds(2.5f);
 		agent.enabled = true;
 		state = State.Idle;
-		HealthBarGroup.DOFade(1f, 0.5f);
+		HealthBarGroup.DOFade(0.5f, 0.5f);
+		CollisionCollider.enabled = true;
 	}
 
 	private void OnEnable()
@@ -93,7 +98,7 @@ public class Enemy : MonoBehaviour
 			Search();
 			break;
 		case State.Follow:
-			agent.SetDestination(Target.position);
+			if(agent.enabled && player.IsAlive) agent.SetDestination(Target.position);
 			break;
 		case State.Dead:
 			break;
@@ -105,13 +110,9 @@ public class Enemy : MonoBehaviour
 		if (SeesTarget)
 		{
 			state = State.Follow;
+			RandomyAccelerate();
 			animator.SetBool("Move", true);
 		}
-	}
-
-	public void Attack()
-	{
-
 	}
 
 	public void GetHit()
@@ -120,7 +121,7 @@ public class Enemy : MonoBehaviour
 		audioSource.PlayOneShot(EnemyHurt);
 		currentHp--;
 		HealthBar.DOFillAmount((float)currentHp/(float)MaxHp, 0.5f).SetEase(Ease.InOutSine);
-		if(currentHp <= 1) // I use here 1 to give the space to the UI's heart mask
+		if(currentHp <= 0)
 			Die();
 	}
 
@@ -147,6 +148,7 @@ public class Enemy : MonoBehaviour
 		//yield return new WaitForSeconds(0.35f);
 		DeadParticles.transform.DOLocalMoveY(0.428f, 0f);
 		DeadParticles.Play();
+		CollisionCollider.enabled = false;
 		yield return new WaitForSeconds(3.5f);
 		gameObject.SetActive(false);
 	}
@@ -169,10 +171,12 @@ public class Enemy : MonoBehaviour
 
 	private void OnCollisionEnter(Collision c)
 	{
+		if(state != State.Follow) return;
 		if (c.gameObject.CompareTag("Player"))
 		{
-			c.rigidbody.AddForce((this.transform.forward+Vector3.up)*20f, ForceMode.Impulse);
+			c.rigidbody.AddForce((this.transform.forward+Vector3.up)*2.5f, ForceMode.Impulse);
 			c.gameObject.GetComponent<Player>().GetHit();
+			StartCoroutine(AttackDelaySequence(Random.Range(0.5f, 2f)));
 		}
 	}
 
@@ -181,7 +185,30 @@ public class Enemy : MonoBehaviour
 	/// </summary>
 	private void RandomyAccelerate()
 	{
+		StartCoroutine(RandomyAccelerateSeq());
+	}
+	private IEnumerator RandomyAccelerateSeq()
+	{
+		while(state == State.Follow)
+		{
+			agent.speed = 1.5f;
+			animator.speed = 1f;
+			yield return new WaitForSeconds(Random.Range(1f, 5f));
+			agent.speed = Random.Range(2.3f, 3f);
+			animator.speed *= 2f;
+			yield return new WaitForSeconds(Random.Range(2f, 5f));
+		}
+	}
 
+	/// <summary>
+	/// Delays the next attack
+	/// </summary>
+	private IEnumerator AttackDelaySequence(float time)
+	{
+		state = State.Rest;
+		animator.SetBool("Move", false);
+		yield return new WaitForSeconds(time);
+		state = State.Idle;
 	}
 
 

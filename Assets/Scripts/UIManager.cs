@@ -12,18 +12,18 @@ public class UIManager : MonoBehaviour
 	public static UIManager Instance;
 
 	public Text CenterText;
+	public CanvasGroup TitleGroup;
+	public CanvasGroup PauseGroup;
 
 	public RectTransform OptionsGroup;
 
 	private void Awake()
 	{
 		Instance = this;
-	}
-
-	private void Start()
-	{
 		// Init elements
 		CenterText.DOFade(0f, 0f);
+		ToggleTitle(false);
+		TogglePause(false);
 	}
 
 	public void SetCenterText(string s)
@@ -59,6 +59,30 @@ public class UIManager : MonoBehaviour
 	public void HideOptions()
 	{
 		OptionsGroup.DOAnchorPosX(301f, .5f).SetEase(Ease.InOutBack);
+	}
+
+	public void ToggleTitle(bool toggle, float time = 0)
+	{		
+		TitleGroup.DOFade(toggle ? 1f : 0f, time);
+		TitleGroup.blocksRaycasts = toggle;
+		TitleGroup.interactable = toggle;
+	}
+
+	public void TogglePause(bool toggle, float time = 0)
+	{				
+		Time.timeScale = toggle ? 0f : 1f;
+		PauseGroup.DOFade(toggle ? 1f : 0f, time).SetUpdate(UpdateType.Normal, true);
+		PauseGroup.blocksRaycasts = toggle;
+		PauseGroup.interactable = toggle;
+
+		// Turn off mouse and lock it
+		Cursor.lockState = toggle ? CursorLockMode.None : CursorLockMode.Locked;
+		Cursor.visible = toggle;
+	}
+
+	public void Resume()
+	{
+		TogglePause(false, 0.5f);
 	}
 
 }

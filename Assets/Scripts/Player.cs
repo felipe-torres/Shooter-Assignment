@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using DG.Tweening;
 
 /// <summary>
 /// Main controller for the player
@@ -11,9 +13,13 @@ public class Player : MonoBehaviour
 	private Rigidbody rb;
 	private Camera camera;
 
-
 	public float MovementSpeed = 2.0f;
 	public bool InputEnabled = true;
+
+	/* Health */
+	public int MaxHp = 10;
+	private int currentHp;
+	public bool IsAlive { get; set; }
 
 	/* Shooting properties */
 	public GameObject BulletPrefab;
@@ -31,6 +37,11 @@ public class Player : MonoBehaviour
 	/* FX */
 	public ParticleSystem HitParticles;
 
+	// UI
+	public Image HealthBar;
+	public CanvasGroup HealthBarGroup;
+
+
 	private void Awake()
 	{
 		animator = GetComponent<Animator>();
@@ -40,18 +51,27 @@ public class Player : MonoBehaviour
 
 		// Init Bullet Pool
 		InitBulletPool();
+
+		Init();
+	}
+
+	public void Init()
+	{
+		IsAlive = true;
+		HealthBarGroup.DOFade(0.0f, 0.0f);
+		currentHp = MaxHp;
 	}
 
 	private void Update()
 	{
-		if(!InputEnabled) return;
+		if(!InputEnabled || !IsAlive) return;
 		Rotate();
 		Shoot();
 	}
 
 	private void FixedUpdate()
 	{
-		if(!InputEnabled) return;
+		if(!InputEnabled || !IsAlive) return;
 		Move(); // Move processing in here since it involves physics calculations
 	}
 
@@ -84,7 +104,7 @@ public class Player : MonoBehaviour
 
 	private void Shoot()
 	{
-		if (Input.GetButtonDown("Fire1"))
+		if (Input.GetButtonDown("Fire1") || Input.GetButtonDown("Jump"))
 		{
 			//Shoot
 			Bullet b = GetBullet();
@@ -129,24 +149,33 @@ public class Player : MonoBehaviour
 
 	public void GetHit()
 	{	
+		if(!IsAlive) return;
 		HitParticles.Play();
 		audioSource.PlayOneShot(playerHurt);
 		
-		//currentHp--;
-		//HealthBar.DOFillAmount((float)currentHp/(float)MaxHp, 0.5f).SetEase(Ease.InOutSine);
-		//if(currentHp <= 1) // I use here 1 to give the space to the UI's heart mask
-		//	Die();
+		currentHp--;
+		HealthBar.DOFillAmount((float)currentHp/(float)MaxHp, 0.5f).SetEase(Ease.InOutSine);
+		HealthBarGroup.DOFade(0.8f, 0.5f);
+		HealthBarGroup.DOFade(0.45f, 0.5f).SetDelay(0.25f).SetLoops(4, LoopType.Yoyo);
+		if(currentHp <= 0) // I use here 1 to give the space to the UI's heart mask
+			Die();
 	}
 
 	public void Die()
 	{
-		/*
-		if (state == State.Dead) return; // What is already dead may not die again
-		state = State.Dead;
+		IsAlive = false;
+		audioSource.PlayOneShot(playerDie);
+		
 		HealthBarGroup.DOFade(0f, 0.5f);
 		animator.SetTrigger("Die");
-		audioSource.PlayOneShot(EnemyDie);
-		*/
+	}
+
+	/// <summary>
+	/// Called when dying animation has finished. Reloads the level
+	/// </summary>
+	public void RestartLevel()
+	{
+		GameManager.Instance.RestartLevel();
 	}
 
 

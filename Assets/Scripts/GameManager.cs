@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityStandardAssets.Cameras;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Controls the main flow of the game
@@ -18,6 +19,10 @@ public class GameManager : MonoBehaviour
 	public ProtectCameraFromWallClip pcfwc;
 	public Transform TutorialObjectiveCamPoint;
 
+	public bool SkipTitle = false;
+
+	public bool Paused { get; set; }
+
 	private void Awake()
 	{
 		Instance = this;
@@ -26,34 +31,45 @@ public class GameManager : MonoBehaviour
 	// Use this for initialization
 	private void Start()
 	{
-		ui = UIManager.Instance;
-		//StartCoroutine(StartSeq());
-
-		// Turn off mouse and lock it
-		Cursor.lockState = CursorLockMode.Locked;
-		Cursor.visible = false;
+		// Turn off input for the player and show title screen
+		if (!SkipTitle)
+		{
+			player.InputEnabled = false;
+			ui = UIManager.Instance;
+			ui.ToggleTitle(true);
+		}
 	}
 
+	public void StartGame()
+	{
+		StartCoroutine(StartSeq());
+	}
 	/// <summary>
 	/// Initial cutscene to show game's objectives
 	/// </summary>
 	private IEnumerator StartSeq()
 	{
-		// Turn off input for the player
-		player.InputEnabled = false;
+		// Hide Title Screen
+		ui.ToggleTitle(false, 0.5f);
+
+		// Turn off mouse and lock it
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
+
 		// Show initial text
 		ui.SetCenterText("You are having THE worst dream!");
 		yield return new WaitForSeconds(3f);
 		ui.SetCenterText("You must get to the clock and wake yourself up!");
-		yield return new WaitForSeconds(5f);
 
-		ui.SetCenterText("Debes llegar a la meta para ganar!");
 		flc.enabled = false;
 		pcfwc.enabled = false;
 		Vector3 camPos = Camera.main.transform.position;
 		Quaternion camRot = Camera.main.transform.rotation;
 		Camera.main.transform.DOMove(TutorialObjectiveCamPoint.position, 2.5f).SetEase(Ease.InOutSine);
 		Camera.main.transform.DORotate(TutorialObjectiveCamPoint.rotation.eulerAngles, 2.5f).SetEase(Ease.InOutSine);
+		// Turn off mouse and lock it
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
 
 		yield return new WaitForSeconds(5f);
 
@@ -65,10 +81,45 @@ public class GameManager : MonoBehaviour
 		pcfwc.enabled = true;
 
 		player.InputEnabled = true;
-		ui.SetCenterText("Usa WASD para moverte");
+		ui.SetCenterText("Use WASD to move");
 		yield return new WaitForSeconds(3f);
-		ui.SetCenterText("Puedes usar Espacio para saltar!");
-		yield return new WaitForSeconds(3f);
+		ui.SetCenterText("Use left click or space to shoot!");
+		yield return new WaitForSeconds(4.5f);
 		ui.SetCenterText("");
+	}
+
+	private void Update()
+	{
+		CheckPause();
+	}
+
+	/// <summary>
+	/// Pauses the game
+	/// </summary>
+	private void CheckPause()
+	{
+		if (Input.GetKeyDown(KeyCode.Escape))
+		{
+			ui.TogglePause(!Paused, 0.5f);
+		}
+	}
+
+	/// <summary>
+	/// Reloads this level.
+	/// </summary>
+	public void RestartLevel()
+	{
+		SceneManager.LoadScene(0);
+	}
+
+	public void ExitGame()
+	{
+#if UNITY_EDITOR
+		UnityEditor.EditorApplication.isPlaying = false;
+#elif UNITY_WEBPLAYER
+		Application.OpenURL(webplayerQuitURL);
+#else
+		Application.Quit();
+#endif
 	}
 }
