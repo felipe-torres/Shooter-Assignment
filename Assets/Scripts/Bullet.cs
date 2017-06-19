@@ -11,6 +11,9 @@ public class Bullet : MonoBehaviour
 	public float Lifetime = 5f;
 	public float ScaleMultiplier = 3f;
 	private Vector3 originalScale;
+	public ConstantForce cf;
+	public Rigidbody rb;
+	public float constantRelativeForce = 20f;
 
 	private void Awake()
 	{
@@ -25,13 +28,39 @@ public class Bullet : MonoBehaviour
 	private IEnumerator Fly()
 	{
 		// Reset 
-		GetComponent<Rigidbody>().velocity = Vector3.zero;
+		rb.velocity = Vector3.zero;
+		rb.angularVelocity = Vector3.zero;
 		transform.localScale = originalScale;
+
+		// Force
+		rb.useGravity = false;
+		cf.relativeForce = Vector3.forward*constantRelativeForce;
 
 		// Grow scale
 		transform.DOScale(ScaleMultiplier*originalScale, 0.5f).SetEase(Ease.InOutSine);
 
 		yield return new WaitForSeconds(Lifetime);
 		gameObject.SetActive(false);
+	}
+
+	private void OnCollisionEnter(Collision c)
+	{
+		if(c.gameObject.CompareTag("Enemy"))
+		{
+			//print("Bullet hit enemy!");
+			cf.relativeForce = Vector3.zero;
+			rb.velocity = Vector3.zero;
+			rb.useGravity = true;
+			gameObject.SetActive(false);
+			// FX
+			c.gameObject.GetComponent<Enemy>().GetHit();
+		}
+		else
+		{
+			//print("Bullet hit something: "+c.gameObject.name);
+			cf.relativeForce = Vector3.zero;
+			rb.velocity = Vector3.zero;
+			rb.useGravity = true;
+		}
 	}
 }

@@ -11,7 +11,9 @@ public class Player : MonoBehaviour
 	private Rigidbody rb;
 	private Camera camera;
 
+
 	public float MovementSpeed = 2.0f;
+	public bool InputEnabled = true;
 
 	/* Shooting properties */
 	public GameObject BulletPrefab;
@@ -20,11 +22,21 @@ public class Player : MonoBehaviour
 	public Transform BulletStartTransform;
 	public int MaxBulletAmmo = 20;
 
+	/* Audio properties */
+	private AudioSource audioSource;
+	public AudioClip playerShoot;
+	public AudioClip playerDie;
+	public AudioClip playerHurt;
+
+	/* FX */
+	public ParticleSystem HitParticles;
+
 	private void Awake()
 	{
 		animator = GetComponent<Animator>();
 		rb = GetComponent<Rigidbody>();
 		camera = Camera.main;
+		audioSource = GetComponent<AudioSource>();
 
 		// Init Bullet Pool
 		InitBulletPool();
@@ -32,12 +44,14 @@ public class Player : MonoBehaviour
 
 	private void Update()
 	{
+		if(!InputEnabled) return;
 		Rotate();
 		Shoot();
 	}
 
 	private void FixedUpdate()
 	{
+		if(!InputEnabled) return;
 		Move(); // Move processing in here since it involves physics calculations
 	}
 
@@ -46,7 +60,8 @@ public class Player : MonoBehaviour
 	/// </summary>
 	private void Rotate()
 	{
-		transform.LookAt(camera.transform.forward * 100f); // Player rotates towards the camera's forward vector
+		Quaternion lookRot = Quaternion.LookRotation(camera.transform.forward*100f, Vector3.up);
+		transform.rotation = Quaternion.Euler(0, lookRot.eulerAngles.y, 0); // Player rotates towards the camera's forward vector
 	}
 
 	/// <summary>
@@ -63,6 +78,7 @@ public class Player : MonoBehaviour
 		// Movement is done by forces
 		rb.velocity = Vector3.zero;
 		rb.AddForce(MovementSpeed * transform.TransformDirection(new Vector3(h, 0f, v)), ForceMode.VelocityChange);
+		//rb.velocity += Physics.gravity;
 
 	}
 
@@ -74,9 +90,13 @@ public class Player : MonoBehaviour
 			Bullet b = GetBullet();
 			if (b != null)
 			{
+				b.rb.velocity = Vector3.zero;
 				b.transform.position = BulletStartTransform.position;
 				b.transform.rotation = BulletStartTransform.rotation;
 				b.gameObject.SetActive(true);
+
+				// SFX
+				audioSource.PlayOneShot(playerShoot, 0.5f);
 			}
 		}
 	}
@@ -105,6 +125,28 @@ public class Player : MonoBehaviour
 
 		// All bullets are occuppied, return nothing
 		return null;
+	}
+
+	public void GetHit()
+	{	
+		HitParticles.Play();
+		audioSource.PlayOneShot(playerHurt);
+		
+		//currentHp--;
+		//HealthBar.DOFillAmount((float)currentHp/(float)MaxHp, 0.5f).SetEase(Ease.InOutSine);
+		//if(currentHp <= 1) // I use here 1 to give the space to the UI's heart mask
+		//	Die();
+	}
+
+	public void Die()
+	{
+		/*
+		if (state == State.Dead) return; // What is already dead may not die again
+		state = State.Dead;
+		HealthBarGroup.DOFade(0f, 0.5f);
+		animator.SetTrigger("Die");
+		audioSource.PlayOneShot(EnemyDie);
+		*/
 	}
 
 
