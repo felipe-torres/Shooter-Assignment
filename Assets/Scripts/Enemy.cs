@@ -12,7 +12,7 @@ public class Enemy : MonoBehaviour
 {
 	private Animator animator;
 
-	public float MovementSpeed = 2.0f;
+	public float MovementSpeed = 2.5f;
 	public int MaxHp = 5;
 	private int currentHp;
 
@@ -26,6 +26,7 @@ public class Enemy : MonoBehaviour
 	public Collider CollisionCollider;
 	public bool SeesTarget { get; set; }
 	public bool BuryOnStart = true;
+	public bool IsClairvoyant = false; // Flag to indicate wether or not this enemy must see the player before following
 
 	// FX
 	public ParticleSystem DeadParticles;
@@ -60,7 +61,7 @@ public class Enemy : MonoBehaviour
 		state = State.Buried;
 		agent.enabled = false;
 		transform.DOMoveY(-1.68f, 0f).SetRelative(true);
-		HealthBarGroup.DOFade(0f, 0.5f);
+		HealthBarGroup.DOFade(0f, 0f);
 		CollisionCollider.enabled = false;
 	}
 
@@ -107,7 +108,7 @@ public class Enemy : MonoBehaviour
 
 	private void Search()
 	{
-		if (SeesTarget)
+		if (SeesTarget || IsClairvoyant)
 		{
 			state = State.Follow;
 			RandomyAccelerate();
@@ -157,7 +158,6 @@ public class Enemy : MonoBehaviour
 	{
 		if (c.gameObject.CompareTag("Player"))
 		{
-			print("Trigger entered by player");
 			SeesTarget = true;
 		}
 	}
@@ -191,12 +191,12 @@ public class Enemy : MonoBehaviour
 	{
 		while(state == State.Follow)
 		{
-			agent.speed = 1.5f;
+			agent.speed = MovementSpeed;
 			animator.speed = 1f;
 			yield return new WaitForSeconds(Random.Range(1f, 5f));
-			agent.speed = Random.Range(2.3f, 3f);
+			agent.speed = Random.Range(2.8f, 3.5f);
 			animator.speed *= 2f;
-			yield return new WaitForSeconds(Random.Range(2f, 5f));
+			yield return new WaitForSeconds(Random.Range(3f, 7f));
 		}
 	}
 

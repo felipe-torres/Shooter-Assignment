@@ -22,6 +22,8 @@ public class GameManager : MonoBehaviour
 	public bool SkipTitle = false;
 
 	public bool Paused { get; set; }
+	public bool GameWon { get; set; }
+	public bool GameOver { get; set; }
 
 	private void Awake()
 	{
@@ -37,6 +39,12 @@ public class GameManager : MonoBehaviour
 			player.InputEnabled = false;
 			ui = UIManager.Instance;
 			ui.ToggleTitle(true);
+		}
+		else
+		{
+			// Turn off mouse and lock it
+			Cursor.lockState = CursorLockMode.Locked;
+			Cursor.visible = false;
 		}
 	}
 
@@ -108,7 +116,24 @@ public class GameManager : MonoBehaviour
 	/// Reloads this level.
 	/// </summary>
 	public void RestartLevel()
-	{
+	{	
+		StartCoroutine(RestartLevelSeq());
+	}
+	private IEnumerator RestartLevelSeq()
+	{		
+		GameOver = true;
+		// Win or Loose logic here
+		if(GameWon)
+		{
+			// Kill all enemies
+			//Object.FindObjectsOfType(typeof(Enemy))
+			print("Won game");
+		}
+		else
+		{
+			print("Lost game");
+		}
+		yield return new WaitForSeconds(5f);
 		SceneManager.LoadScene(0);
 	}
 

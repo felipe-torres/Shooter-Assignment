@@ -55,6 +55,14 @@ public class Bullet : MonoBehaviour
 			// FX
 			c.gameObject.GetComponent<Enemy>().GetHit();
 		}
+		else if(c.gameObject.CompareTag("AlarmClock"))
+		{
+			cf.relativeForce = Vector3.zero;
+			rb.velocity = Vector3.zero;
+			rb.useGravity = true;
+			gameObject.SetActive(false);
+			c.gameObject.GetComponent<AlarmClock>().GetHit();
+		}
 		else
 		{
 			//print("Bullet hit something: "+c.gameObject.name);
