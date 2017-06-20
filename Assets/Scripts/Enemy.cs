@@ -88,6 +88,8 @@ public class Enemy : MonoBehaviour
 		currentHp = MaxHp; 
 		HealthBar.fillAmount = 1;
 		HealthBarGroup.alpha = 1f;
+		animator.SetTrigger("Idle");
+		state = State.Buried;
 	}
 
 	private void Update()

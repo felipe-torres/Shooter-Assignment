@@ -38,6 +38,7 @@ public class AlarmClock : MonoBehaviour
 	private void Start ()
 	{
 		currentHp = MaxHp;
+		HealthBarGroup.DOFade(0f, 0f);
 	}
 
 	/// <summary>
@@ -50,6 +51,9 @@ public class AlarmClock : MonoBehaviour
 		transform.DORotate(originalRot, 0.25f).SetDelay(0.5f).SetId("ClockHitTween");
 
 		HitParticles.Play();
+		HealthBar.DOFillAmount((float)currentHp/(float)MaxHp, 0.5f).SetEase(Ease.InOutSine);
+		HealthBarGroup.DOFade(0.8f, 0.5f);
+		HealthBarGroup.DOFade(0.45f, 0.5f).SetDelay(0.25f).SetLoops(4, LoopType.Yoyo);
 		
 		if(AlarmTriggered) return;
 
@@ -67,6 +71,8 @@ public class AlarmClock : MonoBehaviour
 		AlarmTriggered = true;
 		AlarmParticles.Play();
 		audioSource.PlayOneShot(AlarmSFX);
+
+		HealthBarGroup.DOFade(0f, 0.5f);
 
 		GameManager.Instance.GameWon = true;
 		GameManager.Instance.RestartLevel();

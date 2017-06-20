@@ -165,6 +165,10 @@ public class Player : MonoBehaviour
 	{
 		IsAlive = false;
 		audioSource.PlayOneShot(playerDie);
+
+		rb.velocity = Vector3.zero;
+		rb.angularVelocity = Vector3.zero;
+		rb.isKinematic = true;
 		
 		HealthBarGroup.DOFade(0f, 0.5f);
 		animator.SetTrigger("Die");

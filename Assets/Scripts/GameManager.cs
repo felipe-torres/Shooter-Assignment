@@ -33,11 +33,17 @@ public class GameManager : MonoBehaviour
 	// Use this for initialization
 	private void Start()
 	{
+		// Cheap way of skipping intro and tutorial. Would not normally do this, but use a GameObject with 
+		// DontDestroyOnLoad
+		if(Time.realtimeSinceStartup > 20f)
+			SkipTitle = true;
+
+		ui = UIManager.Instance;
+		ui.FadeIn();
 		// Turn off input for the player and show title screen
 		if (!SkipTitle)
 		{
 			player.InputEnabled = false;
-			ui = UIManager.Instance;
 			ui.ToggleTitle(true);
 		}
 		else
@@ -67,7 +73,7 @@ public class GameManager : MonoBehaviour
 		// Show initial text
 		ui.SetCenterText("You are having THE worst dream!");
 		yield return new WaitForSeconds(3f);
-		ui.SetCenterText("You must get to the clock and wake yourself up!");
+		ui.SetCenterText("You must shoot the clock and wake yourself up!");
 
 		flc.enabled = false;
 		pcfwc.enabled = false;
@@ -126,14 +132,29 @@ public class GameManager : MonoBehaviour
 		if(GameWon)
 		{
 			// Kill all enemies
+			InfiniteWaveSpawner.Instance.KillAllEnemies();
 			//Object.FindObjectsOfType(typeof(Enemy))
 			print("Won game");
+			ui.SetCenterText("You woke up!'grats!");
 		}
 		else
 		{
 			print("Lost game");
+			ui.SetCenterText("The nightmare consumed you :c");
 		}
 		yield return new WaitForSeconds(5f);
+
+		LoadTitle();
+	}
+
+	public void LoadTitle()
+	{
+		StartCoroutine(LoadTitleSeq());
+	}
+	private IEnumerator LoadTitleSeq()
+	{
+		ui.FadeOut();
+		yield return new WaitForSecondsRealtime(0.5f);
 		SceneManager.LoadScene(0);
 	}
 

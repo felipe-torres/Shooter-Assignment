@@ -59,9 +59,17 @@ public class InfiniteWaveSpawner : WaveSpawner
 			}
 			while(e == null);
 
+			// "Instantiate" enemy in the spawn position (copying only xz coords)
+			e.transform.position = new Vector3(pos.x, e.transform.position.y, pos.z);
+			//Quaternion lookRot = Quaternion.LookRotation(camera.transform.forward*100f, Vector3.up);
+			//e.transform.rotation = Quaternion.Euler(0, lookRot.eulerAngles.y, 0);
+			e.gameObject.SetActive(true);
+			e.Spawn();
+
 			// Wait random time
 			yield return new WaitForSeconds(Random.Range(1f, 4f));
 		}
+		yield break;
 	}
 
 	private void InitPool()
@@ -79,7 +87,7 @@ public class InfiniteWaveSpawner : WaveSpawner
 				GameObject go = Instantiate(EnemyPrefab) as GameObject;
 				EnemyPool.Add(go.GetComponent<Enemy>());
 				go.SetActive(false);
-				go.transform.SetParent(EnemyPoolParent.transform);
+				go.transform.SetParent(EnemyPoolParent.transform, false);
 			}
 		}
 	}
@@ -104,6 +112,17 @@ public class InfiniteWaveSpawner : WaveSpawner
 	{
 		int r = Random.Range(0, EnemySpawnPoints.Length);
 		return EnemySpawnPoints[r].position;
+	}
+
+	public void KillAllEnemies()
+	{
+		foreach (Enemy e in EnemyPool) 
+		{
+			if(e.gameObject.activeInHierarchy)
+			{
+				e.Die();
+			}
+		}
 	}
 
 }

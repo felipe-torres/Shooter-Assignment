@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviour
 	public Text CenterText;
 	public CanvasGroup TitleGroup;
 	public CanvasGroup PauseGroup;
+	public Image OverlayFade;
 
 	public RectTransform OptionsGroup;
 
@@ -83,6 +84,16 @@ public class UIManager : MonoBehaviour
 	public void Resume()
 	{
 		TogglePause(false, 0.5f);
+	}
+
+	public void FadeIn()
+	{
+		OverlayFade.DOFade(0f, 0.5f);
+	}
+
+	public void FadeOut()
+	{
+		OverlayFade.DOFade(1f, 0.5f);
 	}
 
 }
